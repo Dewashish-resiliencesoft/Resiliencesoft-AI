@@ -1,0 +1,8 @@
+# RAG pipeline for ResilienceSoft AI chatbot
+chromadb>=0.4.24
+sentence-transformers>=2.7.0
+groq>=0.9.0
+flask>=3.0.0
+python-dotenv>=1.0.1
+scikit-learn>=1.4.0
+tqdm>=4.66.0
