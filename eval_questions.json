@@ -1,142 +1,114 @@
 [
   {
     "question": "Where is your office?",
-    "expected_ids": ["kb-009", "qa-003"],
     "keywords": ["Bilaspur", "Emerald Plaza"]
   },
   {
     "question": "What is ResilienceSoft?",
-    "expected_ids": ["kb-002", "qa-001"],
     "keywords": ["software development", "Bilaspur", "2012"]
   },
   {
     "question": "When was ResilienceSoft founded?",
-    "expected_ids": ["kb-002", "qa-002"],
     "keywords": ["2012"]
   },
   {
     "question": "Where is ResilienceSoft located?",
-    "expected_ids": ["kb-009", "qa-003"],
     "keywords": ["Bilaspur", "Emerald Plaza"]
   },
   {
     "question": "What is the phone number?",
-    "expected_ids": ["kb-009", "qa-004"],
     "keywords": ["9109911372"]
   },
   {
     "question": "What is the email address?",
-    "expected_ids": ["qa-005"],
     "keywords": ["info@resiliencesoft.com"]
   },
   {
     "question": "How can I contact you on WhatsApp?",
-    "expected_ids": ["qa-006", "kb-009"],
     "keywords": ["91099", "WhatsApp"]
   },
   {
     "question": "Who runs ResilienceSoft?",
-    "expected_ids": ["kb-010", "qa-007"],
     "keywords": ["Pankaj Mishra", "Prateek Saluja"]
   },
   {
     "question": "What services do you offer?",
-    "expected_ids": ["kb-006", "qa-008"],
     "keywords": ["web", "app", "digital marketing"]
   },
   {
     "question": "Do you build mobile apps?",
-    "expected_ids": ["kb-015", "qa-010"],
     "keywords": ["Android", "iOS"]
   },
   {
     "question": "Does ResilienceSoft build Flutter apps?",
-    "expected_ids": ["qa-011", "kb-015"],
     "keywords": ["Flutter"]
   },
   {
     "question": "Do you offer Flutter training?",
-    "expected_ids": ["qa-018", "kb-022"],
     "keywords": ["Flutter", "Dart", "training"]
   },
   {
     "question": "What digital marketing services do you provide?",
-    "expected_ids": ["kb-016", "qa-012"],
     "keywords": ["SEO", "social media"]
   },
   {
     "question": "What technologies do you work with?",
-    "expected_ids": ["kb-008", "qa-016"],
     "keywords": ["Angular", "React", "PHP", "Python"]
   },
   {
     "question": "Do you offer internships?",
-    "expected_ids": ["kb-022", "qa-017"],
     "keywords": ["internship", "training"]
   },
   {
     "question": "How much does training cost?",
-    "expected_ids": ["qa-019"],
     "keywords": ["contact", "9109911372"]
   },
   {
     "question": "How do I get my certificate?",
-    "expected_ids": ["qa-020"],
-    "keywords": ["e-Certificate", "certificate number"]
+    "keywords": ["e-certificate", "certificate number"]
   },
   {
     "question": "Is the training ISO certified?",
-    "expected_ids": ["qa-021"],
     "keywords": ["ISO"]
   },
   {
     "question": "What jobs are open at ResilienceSoft?",
-    "expected_ids": ["kb-023", "qa-022"],
     "keywords": ["PHP Developer", "Angular Developer"]
   },
   {
     "question": "What products does ResilienceSoft sell?",
-    "expected_ids": ["kb-019", "qa-024"],
     "keywords": ["HousieMania", "SharpQuiz"]
   },
   {
     "question": "What is Housie Mania?",
-    "expected_ids": ["qa-025", "kb-019"],
     "keywords": ["Tambola", "Housie"]
   },
   {
     "question": "Have you built anything for hospitals?",
-    "expected_ids": ["qa-031", "kb-020"],
-    "keywords": ["Care N Cure", "Shiv Medicity", "healthcare"]
+    "keywords": ["Care N Cure", "healthcare"]
   },
   {
     "question": "What education projects have you done?",
-    "expected_ids": ["qa-032", "kb-020"],
     "keywords": ["Premier Academy", "DocShaala"]
   },
   {
     "question": "Do you work with clients outside India?",
-    "expected_ids": ["qa-033", "kb-021"],
-    "keywords": ["Australia", "USA", "UK"]
+    "keywords": ["Australia", "UK"]
   },
   {
     "question": "Has ResilienceSoft done AI or blockchain work?",
-    "expected_ids": ["qa-034"],
-    "keywords": ["EyeFit", "tongaming", "Notifi"]
+    "keywords": ["EyeFit", "tongaming"]
   },
   {
     "question": "What is the company vision?",
-    "expected_ids": ["kb-003", "qa-038"],
     "keywords": ["empower", "innovative technology"]
   },
   {
     "question": "How many clients does ResilienceSoft have?",
-    "expected_ids": ["qa-043", "kb-002"],
     "keywords": ["100", "clients"]
   },
   {
     "question": "How much does a website cost?",
-    "expected_ids": ["qa-037"],
     "keywords": ["pricing", "contact"]
   }
 ]

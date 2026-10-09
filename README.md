@@ -1,6 +1,6 @@
 # ResilienceSoft AI — RAG Chatbot
 
-A Retrieval-Augmented Generation (RAG) chatbot for **ResilienceSoft**, built with ChromaDB, Sentence Transformers, and Groq.
+A Retrieval-Augmented Generation (RAG) chatbot for **ResilienceSoft**, built with ChromaDB, Sentence Transformers (`all-MiniLM-L6-v2`), and Groq or local self-hosted models (via `llama-cpp-python`).
 
 ## Architecture
 
@@ -8,14 +8,14 @@ A Retrieval-Augmented Generation (RAG) chatbot for **ResilienceSoft**, built wit
 User question
     │
     ▼
-┌──────────────┐    top-k chunks    ┌────────────────┐
-│  ChromaDB    │ ──────────────────▶│  Groq LLM      │
-│  (vectors)   │                    │  (llama-3.1)   │
-└──────────────┘                    └────────┬───────┘
-    ▲                                        │
-    │ embed + index                          ▼
-    │                                   Answer
-chunks.jsonl
+┌──────────────┐    top-k chunks    ┌────────────────────────────────────────┐
+│  ChromaDB    │ ──────────────────▶│  LLM Engine                            │
+│  (vectors)   │                    │  • Groq (default: llama-3.1-8b-instant)│
+└──────────────┘                    │  • Local GGUF (e.g. Qwen2.5 1.5B/3B)   │
+    ▲                               └───────────────────┬────────────────────┘
+    │ embed + index                                     │
+    │                                                   ▼
+chunks.jsonl                                         Answer
 (70 chunks: 27 KB docs + 43 Q&A pairs)
 ```
 
@@ -23,92 +23,130 @@ chunks.jsonl
 
 | File | Purpose |
 |---|---|
-| `chunks.jsonl` | Pre-built retrieval chunks (70 lines) |
-| `build_chunks.py` | Rebuilds chunks.jsonl from `knowledge_base.md` + `qa_pairs.json` |
-| `qa_pairs.json` | 43 question-answer pairs for retrieval |
-| `eval_questions.json` | 28 test questions with expected chunk IDs and keywords |
-| `rag.py` | Full RAG pipeline: ingest, ask, eval, serve |
+| `chunks.jsonl` | Pre-built retrieval chunks (70 total: 69 public, 1 internal) |
+| `build_chunks.py` | Rebuilds `chunks.jsonl` from `knowledge_base.md` + `qa_pairs.json`, splitting long sections at ~300 words |
+| `knowledge_base.md` | Core Markdown knowledge base extracted from public site crawl |
+| `qa_pairs.json` | 43 curated Q&A pairs for precision retrieval |
+| `eval_questions.json` | 28 test questions with strict keywords for retrieval validation |
+| `rag.py` | Complete RAG pipeline: `ingest`, `ask`, `eval`, `serve` |
 | `requirements.txt` | Python dependencies |
 
-## Quick start
+## Quick Start
+
+### 1. Install Dependencies
 
 ```bash
-# 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Build chunks (if you've edited knowledge_base.md or qa_pairs.json)
+# (Optional) If you plan to run local GGUF models:
+# pip install llama-cpp-python
+```
+
+### 2. Configure Environment
+
+Create a `.env` file (loaded automatically by `rag.py`):
+
+```bash
+# For Groq cloud inference:
+GROQ_API_KEY="your-groq-api-key"
+GROQ_MODEL="llama-3.1-8b-instant"
+
+# Or for local self-hosted inference:
+# LLM_BACKEND="local"
+# LOCAL_MODEL_PATH="/path/to/qwen2.5-1.5b-instruct.Q4_K_M.gguf"
+
+# Optional security:
+# API_KEY="your-secret-api-token"
+# RATE_LIMIT_RPM=30
+```
+
+### 3. Build Chunks & Ingest
+
+```bash
+# Build chunks (splits at 300 words, filters internal sections)
 python build_chunks.py
 
-# 3. Ingest chunks into ChromaDB
+# Ingest into ChromaDB vector store
 python rag.py ingest
+```
 
-# 4. Run evaluation (check retrieval hit rate)
+### 4. Evaluate Retrieval
+
+```bash
 python rag.py eval
+```
+Retrieval checks that all required keywords appear in the retrieved context, independent of chunk ID shifts.
 
-# 5. Ask a question (requires GROQ_API_KEY)
-export GROQ_API_KEY="your-key-here"
+### 5. Ask Questions
+
+```bash
 python rag.py ask "Do you offer Flutter training?"
+```
 
-# 6. Start the API server
+### 6. Start the API Server
+
+```bash
 python rag.py serve
 ```
 
-## API
+---
+
+## API Reference
 
 ### `POST /ask`
+
+Includes input validation, query length checks, and per-IP rate limiting (default 30 requests/min).
 
 ```bash
 curl -X POST http://localhost:5000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What services do you offer?"}'
+  -H "Authorization: Bearer <API_KEY>" \
+  -d '{"question": "Where is your office located?"}'
 ```
 
-Response:
+**Success Response (200):**
 ```json
 {
-  "question": "What services do you offer?",
-  "answer": "ResilienceSoft offers web solutions...",
-  "sources": [{"id": "qa-008", "distance": 0.23}, ...]
+  "question": "Where is your office located?",
+  "answer": "ResilienceSoft is located at 2nd Floor, Emerald Plaza, Telephone Exchange Road, Opposite CG Plaza, Bilaspur, Chhattisgarh 495001.",
+  "sources": [
+    {"id": "qa-003", "distance": 0.12},
+    {"id": "kb-009", "distance": 0.19}
+  ]
 }
 ```
+
+**Error Responses:**
+- `400 Bad Request`: Empty query, non-string input, or exceeds 1,000 characters.
+- `401 Unauthorized`: When `API_KEY` is configured and header is missing or incorrect.
+- `429 Too Many Requests`: When client exceeds the configured rate limit.
 
 ### `GET /health`
 
 Returns `{"status": "ok"}`.
 
-## Configuration
+---
 
-| Env variable | Default | Description |
+## Configuration Reference
+
+| Env Variable | Default | Description |
 |---|---|---|
-| `GROQ_API_KEY` | *(required)* | Groq API key |
-| `GROQ_MODEL` | `llama-3.1-8b-instant` | Groq model name |
-| `EMBED_MODEL` | `all-MiniLM-L6-v2` | Sentence Transformers model |
-| `CHROMA_DIR` | `./chroma_db` | ChromaDB persistence directory |
-| `TOP_K` | `5` | Number of chunks to retrieve |
+| `GROQ_API_KEY` | *(required for Groq)* | Groq API authentication key |
+| `GROQ_MODEL` | `llama-3.1-8b-instant` | Groq chat model identifier |
+| `LLM_BACKEND` | `groq` | Choose `groq` or `local` |
+| `LOCAL_MODEL_PATH` | `""` | Path to `.gguf` file if `LLM_BACKEND=local` |
+| `EMBED_MODEL` | `all-MiniLM-L6-v2` | SentenceTransformers embedding model |
+| `CHROMA_DIR` | `./chroma_db` | Directory for persistent ChromaDB storage |
+| `TOP_K` | `5` | Number of context chunks retrieved per query |
 | `PORT` | `5000` | Flask server port |
+| `API_KEY` | `""` | Optional Bearer token protection for `/ask` |
+| `RATE_LIMIT_RPM` | `30` | Max requests per IP per minute |
 
-## Evaluation
+---
 
-The eval set has 28 questions. A TF-IDF stand-in retriever scored 25/28. The three that failed use different wording than the data:
+## Open Decisions (Team Confirmation)
 
-| Question | Problem | Fix |
-|---|---|---|
-| "Where is your office?" | "office" vs "located" | Real embeddings should handle this |
-| "Have you built anything for hospitals?" | "hospitals" vs "healthcare" | Real embeddings should handle this |
-| "Do you work with clients outside India?" | different phrasing | Real embeddings should handle this |
-
-If these still fail with real embeddings, add Q&A pairs worded like those questions.
-
-## Adding your own material
-
-1. Add content to `knowledge_base.md` (or create it if it doesn't exist)
-2. Mark non-customer content with `visibility: internal` 
-3. Run `python build_chunks.py` → `python rag.py ingest` → `python rag.py eval`
-4. Topics to add: ResilioHub, Navigator AI, TV app, product features/pricing
-
-## Open items to confirm
-
-- [ ] Two addresses: footer ("Opposite CG Plaza") vs About page ("Opposite Vinayak Netralaya, Link Road")
-- [ ] Client count: About page says 250+ customers, homepage says "more than 100 clients"
-- [ ] Team role inconsistencies across pages
-- [ ] Product detail pages (features, pricing, tech stack)
+- [ ] **Address Confirmation**: Reconcile footer address ("Opposite CG Plaza") vs About page ("Opposite Vinayak Netralaya, Link Road").
+- [ ] **Client Count**: Reconcile homepage stat ("100+ clients") vs About page stat ("250+ customers").
+- [ ] **Team Roles**: Confirm titles for Deepak Verma and Shreya Gupta across different pages.
+- [ ] **Internal Products**: Add documentation for ResilioHub, Navigator AI, Android TV signage, etc., tagged with `visibility: internal`.

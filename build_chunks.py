@@ -5,12 +5,14 @@ build_chunks.py — Build chunks.jsonl from knowledge_base.md and qa_pairs.json.
 Reads the markdown knowledge base and structured Q&A pairs,
 splits them into retrieval-ready chunks, and writes chunks.jsonl.
 
+Long sections are split at roughly MAX_CHUNK_WORDS so that every chunk
+fits inside the embedding model's token window (~256 tokens for MiniLM).
+
 Usage:
     python build_chunks.py
 """
 
 import json
-import re
 import statistics
 from pathlib import Path
 
@@ -19,10 +21,61 @@ KB_FILE = ROOT / "knowledge_base.md"
 QA_FILE = ROOT / "qa_pairs.json"
 OUT_FILE = ROOT / "chunks.jsonl"
 
+MAX_CHUNK_WORDS = 300  # split KB sections longer than this
+
 
 # ---------------------------------------------------------------------------
 # Markdown knowledge base parser
 # ---------------------------------------------------------------------------
+
+def _split_long(text: str, limit: int = MAX_CHUNK_WORDS) -> list[str]:
+    """
+    Split *text* into pieces of at most *limit* words.
+
+    Tries to break on blank lines first (paragraph boundaries),
+    then on any newline, and only as a last resort on word count.
+    """
+    words = text.split()
+    if len(words) <= limit:
+        return [text]
+
+    # Try paragraph-level split first
+    paragraphs = [p for p in text.split("\n\n") if p.strip()]
+    if len(paragraphs) >= 2:
+        parts: list[str] = []
+        buf: list[str] = []
+        buf_words = 0
+        for para in paragraphs:
+            pw = len(para.split())
+            if buf and buf_words + pw > limit:
+                parts.append("\n\n".join(buf))
+                buf = [para]
+                buf_words = pw
+            else:
+                buf.append(para)
+                buf_words += pw
+        if buf:
+            parts.append("\n\n".join(buf))
+        return parts
+
+    # Line-level split
+    lines = text.splitlines()
+    parts = []
+    buf = []
+    buf_words = 0
+    for line in lines:
+        lw = len(line.split())
+        if buf and buf_words + lw > limit:
+            parts.append("\n".join(buf))
+            buf = [line]
+            buf_words = lw
+        else:
+            buf.append(line)
+            buf_words += lw
+    if buf:
+        parts.append("\n".join(buf))
+    return parts
+
 
 def parse_knowledge_base(path: Path) -> list[dict]:
     """
@@ -31,15 +84,15 @@ def parse_knowledge_base(path: Path) -> list[dict]:
     Rules:
     - Each H2 (##) starts a new section.
     - Each H3 (###) within a section starts a sub-chunk.
-    - Lines starting with > are metadata (source, visibility, etc.).
     - The "Gaps and inconsistencies" section is tagged visibility: internal.
+    - Sections longer than MAX_CHUNK_WORDS are split further.
     """
     if not path.exists():
         print(f"⚠  {path} not found — skipping knowledge base chunks.")
         return []
 
     text = path.read_text(encoding="utf-8")
-    chunks = []
+    chunks: list[dict] = []
     chunk_id = 0
     current_section = ""
     current_sub = ""
@@ -52,21 +105,25 @@ def parse_knowledge_base(path: Path) -> list[dict]:
         body = "\n".join(current_lines).strip()
         if not body:
             return
-        chunk_id += 1
         section = current_section or doc_title or "Introduction"
-        title = f"ResilienceSoft - {section}"
-        if current_sub:
-            title += f" > {current_sub}"
-        chunks.append({
-            "id": f"kb-{chunk_id:03d}",
-            "text": f"{title}\n{body}",
-            "metadata": {
-                "source": "website",
-                "section": current_section + (f" > {current_sub}" if current_sub else ""),
-                "type": "doc",
-                "visibility": visibility,
-            },
-        })
+        sub_label = f" > {current_sub}" if current_sub else ""
+        title = f"ResilienceSoft - {section}{sub_label}"
+        meta_section = f"{section}{sub_label}"
+
+        parts = _split_long(body)
+        for idx, part in enumerate(parts):
+            chunk_id += 1
+            suffix = f" (part {idx + 1})" if len(parts) > 1 else ""
+            chunks.append({
+                "id": f"kb-{chunk_id:03d}",
+                "text": f"{title}{suffix}\n{part.strip()}",
+                "metadata": {
+                    "source": "website",
+                    "section": meta_section,
+                    "type": "doc",
+                    "visibility": visibility,
+                },
+            })
 
     for line in text.splitlines():
         if line.startswith("# ") and not line.startswith("## "):
@@ -84,7 +141,8 @@ def parse_knowledge_base(path: Path) -> list[dict]:
             # Mark "gaps" section as internal
             visibility = (
                 "internal"
-                if "gap" in current_section.lower() or "inconsistenc" in current_section.lower()
+                if "gap" in current_section.lower()
+                or "inconsistenc" in current_section.lower()
                 else "public"
             )
         elif line.startswith("### "):

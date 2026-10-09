@@ -8,20 +8,34 @@ Commands:
     python rag.py eval            Run eval_questions.json and report hit rate
     python rag.py serve           Start a Flask API server on port 5000
 
-Environment variables:
-    GROQ_API_KEY        Required for ask/serve (Groq LLM)
+Environment variables (also loadable from .env):
+    GROQ_API_KEY        Required for ask/serve when using Groq
     GROQ_MODEL          Optional, default: llama-3.1-8b-instant
     EMBED_MODEL         Optional, default: all-MiniLM-L6-v2
     CHROMA_DIR          Optional, default: ./chroma_db
     TOP_K               Optional, default: 5
     PORT                Optional, default: 5000
+    LLM_BACKEND         Optional, "groq" (default) or "local"
+    LOCAL_MODEL_PATH    Path to a GGUF file for local inference
+    API_KEY             Optional, secret key to protect /ask endpoint
 """
 
 import json
 import os
 import sys
+import time
+from collections import defaultdict
 from pathlib import Path
 from textwrap import dedent
+
+# ---------------------------------------------------------------------------
+# Load .env if python-dotenv is installed (optional convenience)
+# ---------------------------------------------------------------------------
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+except ImportError:
+    pass  # dotenv not installed; rely on shell env vars
 
 # ---------------------------------------------------------------------------
 # Config
@@ -35,6 +49,12 @@ EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 TOP_K = int(os.getenv("TOP_K", "5"))
 COLLECTION = "resiliencesoft"
+LLM_BACKEND = os.getenv("LLM_BACKEND", "groq").lower()  # "groq" or "local"
+LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", "")
+API_KEY = os.getenv("API_KEY", "")  # optional auth for /ask
+
+# Rate limiting: max requests per IP per minute
+RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", "30"))
 
 SYSTEM_PROMPT = dedent("""\
     You are a helpful customer-support assistant for ResilienceSoft, a software
@@ -61,6 +81,7 @@ _chroma_client = None
 _collection = None
 _embed_fn = None
 _groq_client = None
+_local_llm = None
 
 
 def _get_embed_fn():
@@ -97,6 +118,32 @@ def _get_groq():
         from groq import Groq
         _groq_client = Groq(api_key=api_key)
     return _groq_client
+
+
+def _get_local_llm():
+    """Load a local GGUF model via llama-cpp-python."""
+    global _local_llm
+    if _local_llm is None:
+        if not LOCAL_MODEL_PATH:
+            print("❌ Set LOCAL_MODEL_PATH to a .gguf file.")
+            sys.exit(1)
+        if not Path(LOCAL_MODEL_PATH).exists():
+            print(f"❌ Model file not found: {LOCAL_MODEL_PATH}")
+            sys.exit(1)
+        try:
+            from llama_cpp import Llama
+        except ImportError:
+            print("❌ Install llama-cpp-python:  pip install llama-cpp-python")
+            sys.exit(1)
+        print(f"⏳ Loading local model: {LOCAL_MODEL_PATH}")
+        _local_llm = Llama(
+            model_path=LOCAL_MODEL_PATH,
+            n_ctx=2048,
+            n_threads=os.cpu_count() or 4,
+            verbose=False,
+        )
+        print("✅ Local model loaded.")
+    return _local_llm
 
 
 # ---------------------------------------------------------------------------
@@ -182,9 +229,16 @@ def retrieve(query: str, top_k: int = TOP_K) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def generate_answer(query: str, context_chunks: list[dict]) -> str:
-    """Call Groq LLM with the retrieved context and user query."""
+    """Generate an answer using Groq or a local GGUF model."""
     context_text = "\n\n---\n\n".join(c["text"] for c in context_chunks)
 
+    if LLM_BACKEND == "local":
+        return _generate_local(query, context_text)
+    return _generate_groq(query, context_text)
+
+
+def _generate_groq(query: str, context_text: str) -> str:
+    """Call Groq LLM with the retrieved context and user query."""
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -201,6 +255,19 @@ def generate_answer(query: str, context_chunks: list[dict]) -> str:
         max_tokens=512,
     )
     return response.choices[0].message.content.strip()
+
+
+def _generate_local(query: str, context_text: str) -> str:
+    """Run inference on a local GGUF model via llama-cpp-python."""
+    llm = _get_local_llm()
+    prompt = (
+        f"<|im_start|>system\n{SYSTEM_PROMPT}<|im_end|>\n"
+        f"<|im_start|>user\nContext:\n{context_text}\n\n---\n\n"
+        f"Question: {query}<|im_end|>\n"
+        f"<|im_start|>assistant\n"
+    )
+    output = llm(prompt, max_tokens=512, temperature=0.3, stop=["<|im_end|>"])
+    return output["choices"][0]["text"].strip()
 
 
 # ---------------------------------------------------------------------------
@@ -226,11 +293,16 @@ def ask(query: str):
 
 
 # ---------------------------------------------------------------------------
-# Eval
+# Eval — keyword-only (no brittle hard-coded IDs)
 # ---------------------------------------------------------------------------
 
 def evaluate():
-    """Run eval_questions.json through retrieval and report hit rate."""
+    """Run eval_questions.json through retrieval and report hit rate.
+
+    A question passes when ALL its keywords appear somewhere in the
+    concatenated text of the top-k retrieved chunks.  This is stable
+    across chunk-ID renumbering after knowledge base edits.
+    """
     if not EVAL_FILE.exists():
         print(f"❌ {EVAL_FILE} not found.")
         return
@@ -244,32 +316,24 @@ def evaluate():
 
     for q in questions:
         query = q["question"]
-        expected = set(q["expected_ids"])
         keywords = [kw.lower() for kw in q.get("keywords", [])]
 
         results = retrieve(query, top_k=TOP_K)
-        retrieved_ids = {r["id"] for r in results}
         retrieved_text = " ".join(r["text"] for r in results).lower()
 
-        # A question passes if ANY expected id is retrieved OR ALL keywords appear
-        id_hit = bool(expected & retrieved_ids)
-        keyword_hit = all(kw in retrieved_text for kw in keywords) if keywords else False
+        # Pass when every keyword appears in the retrieved context
+        passed = all(kw in retrieved_text for kw in keywords) if keywords else False
 
-        if id_hit or keyword_hit:
+        if passed:
             hits += 1
-            status = "✅"
+            print(f"  ✅ {query}")
         else:
-            status = "❌"
-            failures.append({
-                "question": query,
-                "expected": list(expected),
-                "retrieved": [r["id"] for r in results],
-            })
-
-        print(f"  {status} {query}")
-        if not (id_hit or keyword_hit):
-            print(f"      Expected: {list(expected)}")
-            print(f"      Got:      {[r['id'] for r in results]}")
+            missing = [kw for kw in keywords if kw not in retrieved_text]
+            failures.append({"question": query, "missing_keywords": missing,
+                             "retrieved": [r["id"] for r in results]})
+            print(f"  ❌ {query}")
+            print(f"      Missing keywords: {missing}")
+            print(f"      Retrieved: {[r['id'] for r in results]}")
 
     print(f"\n📊 Hit rate: {hits}/{total} ({100 * hits / total:.0f}%)")
 
@@ -277,7 +341,7 @@ def evaluate():
         print(f"\n⚠  {len(failures)} failures:")
         for fail in failures:
             print(f"   - \"{fail['question']}\"")
-            print(f"     Expected: {fail['expected']}, Got: {fail['retrieved']}")
+            print(f"     Missing: {fail['missing_keywords']}")
 
 
 # ---------------------------------------------------------------------------
@@ -290,16 +354,51 @@ def serve():
 
     app = Flask(__name__)
 
+    # ---- simple in-memory rate limiter ----
+    _rate_log: dict[str, list[float]] = defaultdict(list)
+
+    def _check_rate_limit(ip: str) -> bool:
+        """Return True if the IP is within the rate limit."""
+        now = time.time()
+        window = 60.0  # 1 minute
+        timestamps = _rate_log[ip]
+        # Prune old entries
+        _rate_log[ip] = [t for t in timestamps if now - t < window]
+        if len(_rate_log[ip]) >= RATE_LIMIT_RPM:
+            return False
+        _rate_log[ip].append(now)
+        return True
+
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({"status": "ok"})
 
     @app.route("/ask", methods=["POST"])
     def api_ask():
-        data = request.get_json(force=True)
-        query = data.get("question", "").strip()
+        # --- API key check ---
+        if API_KEY:
+            auth = request.headers.get("Authorization", "")
+            if auth != f"Bearer {API_KEY}":
+                return jsonify({"error": "Unauthorized"}), 401
+
+        # --- rate limit ---
+        client_ip = request.remote_addr or "unknown"
+        if not _check_rate_limit(client_ip):
+            return jsonify({"error": "Rate limit exceeded. Try again shortly."}), 429
+
+        # --- input validation ---
+        data = request.get_json(silent=True)
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "Request body must be JSON with a 'question' field"}), 400
+
+        query = data.get("question", "")
+        if not isinstance(query, str):
+            return jsonify({"error": "'question' must be a string"}), 400
+        query = query.strip()
         if not query:
-            return jsonify({"error": "Missing 'question' field"}), 400
+            return jsonify({"error": "Missing or empty 'question' field"}), 400
+        if len(query) > 1000:
+            return jsonify({"error": "Question too long (max 1000 characters)"}), 400
 
         hits = retrieve(query)
         answer = generate_answer(query, hits)
@@ -313,6 +412,10 @@ def serve():
     print(f"🚀 Starting server on http://0.0.0.0:{port}")
     print(f"   POST /ask  {{\"question\": \"...\"}}")
     print(f"   GET  /health")
+    if API_KEY:
+        print(f"   🔒 API key required (Authorization: Bearer <key>)")
+    print(f"   ⏱  Rate limit: {RATE_LIMIT_RPM} req/min per IP")
+    print(f"   🤖 LLM backend: {LLM_BACKEND}")
     app.run(host="0.0.0.0", port=port, debug=False)
 
 
