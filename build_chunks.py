@@ -45,6 +45,7 @@ def parse_knowledge_base(path: Path) -> list[dict]:
     current_sub = ""
     current_lines: list[str] = []
     visibility = "public"
+    doc_title = ""
 
     def flush():
         nonlocal chunk_id
@@ -52,7 +53,8 @@ def parse_knowledge_base(path: Path) -> list[dict]:
         if not body:
             return
         chunk_id += 1
-        title = f"ResilienceSoft - {current_section}"
+        section = current_section or doc_title or "Introduction"
+        title = f"ResilienceSoft - {section}"
         if current_sub:
             title += f" > {current_sub}"
         chunks.append({
@@ -67,7 +69,14 @@ def parse_knowledge_base(path: Path) -> list[dict]:
         })
 
     for line in text.splitlines():
-        if line.startswith("## "):
+        if line.startswith("# ") and not line.startswith("## "):
+            # H1 — document title; treat as section name for preamble
+            flush()
+            doc_title = line[2:].strip()
+            current_section = doc_title
+            current_sub = ""
+            current_lines = []
+        elif line.startswith("## "):
             flush()
             current_section = line[3:].strip()
             current_sub = ""
