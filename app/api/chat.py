@@ -9,7 +9,9 @@ from app.db import COMPANY_SITE, find_product
 from app.llm_gateway.manager import generate_answer
 from app.rag_engine.prompt import NO_ANSWER, system_prompt, user_prompt
 from app.rag_engine.retrieve import retrieve
-from app.security.guards import check_rate_limit, resolve_site
+from app.security.guards import (
+    check_rate_limit, contains_secret, looks_like_injection, resolve_site, scrub_untrusted,
+)
 
 router = APIRouter()
 
@@ -75,6 +77,9 @@ def chat(req: ChatRequest, request: Request):
     message = req.message.strip()
     if not message or len(message) > s.max_message_chars:
         raise HTTPException(400, f"Message must be 1-{s.max_message_chars} characters")
+    if looks_like_injection(message) or any(looks_like_injection(h.content) for h in req.history):
+        return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
+                "sources": [], "request_id": rid}
 
     product = req.page_context.product_slug or (None if site.site_id == COMPANY_SITE else site.site_id)
     sources: list[dict] = []
@@ -95,17 +100,25 @@ def chat(req: ChatRequest, request: Request):
         return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
                 "sources": [], "request_id": rid}
 
+    safe_hits = []
     seen = set()
     for h in hits:
+        if contains_secret(h.get("text", "")) or contains_secret(h.get("title", "")):
+            continue
+        h = {**h, "text": scrub_untrusted(h.get("text", ""))}
+        safe_hits.append(h)
         if h.get("source_url") and h["source_url"] not in seen:
             seen.add(h["source_url"])
             sources.append({"title": h.get("title", ""), "url": h["source_url"]})
+    if not safe_hits:
+        return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
+                "sources": [], "request_id": rid}
 
-    answer = generate_answer(system_prompt(), user_prompt(message, hits), rid)
+    answer = generate_answer(system_prompt(), user_prompt(message, safe_hits), rid)
     if answer is None:
         return {"answer": f"Sorry, I'm having trouble answering right now. Please {_contact_line(site.site_id)}.",
                 "sources": [], "request_id": rid}
-    if NO_ANSWER in answer:
+    if NO_ANSWER in answer or contains_secret(answer):
         return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
                 "sources": [], "request_id": rid}
     return {"answer": answer, "sources": sources, "request_id": rid}
