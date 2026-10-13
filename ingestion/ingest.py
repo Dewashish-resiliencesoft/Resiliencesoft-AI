@@ -12,7 +12,6 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.db import COMPANY_SITE, get_db, knowledge_collection
-from app.rag_engine.embed import embed_documents
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 
@@ -58,6 +57,7 @@ def ingest(site_id: str, product_id: str, source_url: str, folder: Path = DATA):
     existing = {d["chunk_key"]: d["content_hash"] for d in coll.find(owned, {"chunk_key": 1, "content_hash": 1})}
     changed = [d for d in docs if existing.get(d["chunk_key"]) != d["content_hash"]]
     if changed:
+        from app.rag_engine.embed import embed_documents
         for d, v in zip(changed, embed_documents([d["text"] for d in changed])):
             d["embedding"] = v
             d["document_version"] = 1
