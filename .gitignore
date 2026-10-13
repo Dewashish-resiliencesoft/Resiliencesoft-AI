@@ -5,3 +5,4 @@ chroma_db/
 *.egg-info/
 dist/
 build/
+.venv/

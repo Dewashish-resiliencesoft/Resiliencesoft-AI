@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: resiliencesoft-ai-rag
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - {key: PYTHON_VERSION, value: "3.12.3"}
+      - {key: MONGODB_URI, sync: false}
+      - {key: MONGODB_DB, value: resiliencesoft_ai}
+      - {key: GROQ_API_KEY, sync: false}
+      - {key: GROQ_MODEL, value: openai/gpt-oss-20b}
+      - {key: GEMINI_API_KEY, sync: false}
+      - {key: GEMINI_MODEL, value: gemini-3.1-flash-lite}
+      - {key: NIM_API_KEY, sync: false}
+      - {key: NIM_MODEL, value: nvidia/nemotron-3-super-120b-a12b}
+      - {key: NIM_ENABLED, value: "false"}
+      - {key: PROVIDER_ORDER, value: "groq,nim,gemini"}
+      - {key: SITES_JSON, sync: false}
+      - {key: RATE_LIMIT_RPM, value: "30"}

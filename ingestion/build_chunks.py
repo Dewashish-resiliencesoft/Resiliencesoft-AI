@@ -9,14 +9,14 @@ Long sections are split at roughly MAX_CHUNK_WORDS so that every chunk
 fits inside the embedding model's token window (~256 tokens for MiniLM).
 
 Usage:
-    python build_chunks.py
+    python -m ingestion.build_chunks
 """
 
 import json
 import statistics
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent / "data"
 KB_FILE = ROOT / "knowledge_base.md"
 QA_FILE = ROOT / "qa_pairs.json"
 OUT_FILE = ROOT / "chunks.jsonl"
