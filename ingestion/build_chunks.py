@@ -12,14 +12,12 @@ Usage:
     python -m ingestion.build_chunks
 """
 
+import argparse
 import json
 import statistics
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent / "data"
-KB_FILE = ROOT / "knowledge_base.md"
-QA_FILE = ROOT / "qa_pairs.json"
-OUT_FILE = ROOT / "chunks.jsonl"
 
 MAX_CHUNK_WORDS = 300  # split KB sections longer than this
 
@@ -77,7 +75,7 @@ def _split_long(text: str, limit: int = MAX_CHUNK_WORDS) -> list[str]:
     return parts
 
 
-def parse_knowledge_base(path: Path) -> list[dict]:
+def parse_knowledge_base(path: Path, brand: str = "ResilienceSoft") -> list[dict]:
     """
     Parse knowledge_base.md into chunks.
 
@@ -99,6 +97,7 @@ def parse_knowledge_base(path: Path) -> list[dict]:
     current_lines: list[str] = []
     visibility = "public"
     doc_title = ""
+    current_source = ""
 
     def flush():
         nonlocal chunk_id
@@ -107,7 +106,7 @@ def parse_knowledge_base(path: Path) -> list[dict]:
             return
         section = current_section or doc_title or "Introduction"
         sub_label = f" > {current_sub}" if current_sub else ""
-        title = f"ResilienceSoft - {section}{sub_label}"
+        title = f"{brand} - {section}{sub_label}"
         meta_section = f"{section}{sub_label}"
 
         parts = _split_long(body)
@@ -122,10 +121,15 @@ def parse_knowledge_base(path: Path) -> list[dict]:
                     "section": meta_section,
                     "type": "doc",
                     "visibility": visibility,
+                    **({"source_url": current_source} if current_source else {}),
                 },
             })
 
     for line in text.splitlines():
+        if line.startswith("> Source: ") and not current_lines:
+            # per-section canonical URL; kept out of the chunk text
+            current_source = line[len("> Source: "):].strip().split()[0]
+            continue
         if line.startswith("# ") and not line.startswith("## "):
             # H1 — document title; treat as section name for preamble
             flush()
@@ -135,6 +139,7 @@ def parse_knowledge_base(path: Path) -> list[dict]:
             current_lines = []
         elif line.startswith("## "):
             flush()
+            current_source = ""
             current_section = line[3:].strip()
             current_sub = ""
             current_lines = []
@@ -181,6 +186,7 @@ def parse_qa_pairs(path: Path) -> list[dict]:
                 "section": "Q&A",
                 "type": "qa",
                 "visibility": pair.get("visibility", "public"),
+                **({"source_url": pair["source_url"]} if pair.get("source_url") else {}),
             },
         })
     return chunks
@@ -191,8 +197,14 @@ def parse_qa_pairs(path: Path) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def main():
-    kb_chunks = parse_knowledge_base(KB_FILE)
-    qa_chunks = parse_qa_pairs(QA_FILE)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", default=str(ROOT), help="folder with knowledge_base.md and qa_pairs.json")
+    ap.add_argument("--brand", default="ResilienceSoft")
+    a = ap.parse_args()
+    base = Path(a.dir)
+    OUT_FILE = base / "chunks.jsonl"
+    kb_chunks = parse_knowledge_base(base / "knowledge_base.md", a.brand)
+    qa_chunks = parse_qa_pairs(base / "qa_pairs.json")
     all_chunks = kb_chunks + qa_chunks
 
     if not all_chunks:

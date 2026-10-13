@@ -1,0 +1,62 @@
+[
+ {
+  "question": "What is ResilioHub and how does it work?",
+  "answer": "ResilioHub connects your WhatsApp number to a unified platform where you can broadcast campaigns, run chatbots, and manage every conversation with your team — all in one dashboard.",
+  "source_url": "https://resiliohub.com/#faq"
+ },
+ {
+  "question": "Do I need a verified WhatsApp Business account?",
+  "answer": "For official API features and bulk campaigns, a WhatsApp Business API account is recommended. You can also connect instantly via WhatsApp QR for quick setup.",
+  "source_url": "https://resiliohub.com/#faq"
+ },
+ {
+  "question": "Can I manage Instagram and Telegram too?",
+  "answer": "Yes. The unified inbox brings Instagram and Telegram conversations alongside WhatsApp, so your team replies from a single place.",
+  "source_url": "https://resiliohub.com/#faq"
+ },
+ {
+  "question": "Can I broadcast messages to thousands of contacts?",
+  "answer": "Absolutely. Upload your phonebook, pick a Meta-approved template, and send bulk campaigns to thousands of contacts in minutes — then track delivery and open rates.",
+  "source_url": "https://resiliohub.com/#faq"
+ },
+ {
+  "question": "How does the chatbot builder work?",
+  "answer": "Drag and drop triggers, conditions, and actions onto a visual canvas — no code required. Connect webhooks and templates to automate replies, qualify leads, and route conversations.",
+  "source_url": "https://resiliohub.com/#faq"
+ },
+ {
+  "question": "How much does ResilioHub cost?",
+  "answer": "ResilioHub plans are Monthly ₹1,499 (30 days), Quarterly ₹3,999 (90 days), Half Yearly ₹6,999 (180 days) and Yearly ₹9,999 (365 days). Every plan includes all features, with no hidden fees, and you can cancel anytime.",
+  "source_url": "https://resiliohub.com/#pricing"
+ },
+ {
+  "question": "Is there a free trial for ResilioHub?",
+  "answer": "Yes. ResilioHub offers a 14-day free trial with no credit card required. Sign up at https://resiliohub.com/signup/.",
+  "source_url": "https://resiliohub.com/signup/"
+ },
+ {
+  "question": "How can I contact ResilioHub support?",
+  "answer": "Email support@resiliohub.com or call/WhatsApp +91 92019 96372. Sales, technical support and onboarding are available Monday to Saturday, 10:00 AM – 7:00 PM IST.",
+  "source_url": "https://resiliohub.com/contact/"
+ },
+ {
+  "question": "Is there a ResilioHub mobile app?",
+  "answer": "Yes. ResilioHub is available on Google Play for Android and on the Apple App Store for iPhone.",
+  "source_url": "https://resiliohub.com/"
+ },
+ {
+  "question": "How do I delete my ResilioHub account?",
+  "answer": "Email the support team from your registered address with the subject line \"Delete my account\", including the email or phone number on the account. After identity confirmation, the account is deactivated immediately and permanently removed within 24 hours. Remaining wallet balance and unused plan days are forfeited with no refund.",
+  "source_url": "https://resiliohub.com/delete-account/"
+ },
+ {
+  "question": "What channels does ResilioHub support?",
+  "answer": "ResilioHub's unified inbox supports WhatsApp Business API, WhatsApp QR, Instagram Direct and Telegram, plus REST API, webhooks and Meta templates.",
+  "source_url": "https://resiliohub.com/features/"
+ },
+ {
+  "question": "Who makes ResilioHub?",
+  "answer": "ResilioHub is built and powered by ResilienceSoft, a Meta Tech Partner for the WhatsApp Business API.",
+  "source_url": "https://resiliohub.com/about/"
+ }
+]

@@ -2,7 +2,7 @@
 
 Admin-only CLI. Usage:
     python -m ingestion.build_chunks
-    python -m ingestion.ingest [--site-id resiliencesoft] [--product-id general] [--source-url URL]
+    python -m ingestion.ingest [--site-id resiliencesoft] [--product-id general] [--source-url URL] [--dir data/resiliohub]
     python -m ingestion.ingest --indexes     # create Atlas search indexes
 """
 import argparse
@@ -34,9 +34,9 @@ def ensure_indexes():
     print("indexes requested (Atlas builds them async)")
 
 
-def ingest(site_id: str, product_id: str, source_url: str):
+def ingest(site_id: str, product_id: str, source_url: str, folder: Path = DATA):
     db = get_db()
-    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    chunks = [json.loads(l) for l in (folder / "chunks.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     docs = []
     for c in chunks:
         m = c["metadata"]
@@ -44,7 +44,7 @@ def ingest(site_id: str, product_id: str, source_url: str):
             "chunk_key": c["id"], "site_id": site_id, "product_id": product_id,
             "scope": "internal" if m.get("visibility") == "internal" else "public",
             "language": "en", "title": m.get("section", ""), "text": c["text"],
-            "source_url": source_url, "source": m.get("source", ""),
+            "source_url": m.get("source_url", source_url), "source": m.get("source", ""),
             "content_hash": hashlib.sha256(c["text"].encode()).hexdigest(),
         })
     coll = db["chunks"]
@@ -60,7 +60,7 @@ def ingest(site_id: str, product_id: str, source_url: str):
         coll.delete_many({"site_id": site_id, "chunk_key": {"$in": list(stale)}})
     print(f"upserted {len(changed)}, unchanged {len(docs) - len(changed)}, removed {len(stale)}")
 
-    for p in (DATA / "products").glob("*.json"):
+    for p in (folder / "products").glob("*.json"):
         rec = json.loads(p.read_text(encoding="utf-8"))
         db["products"].replace_one({"site_id": rec["site_id"], "product_id": rec["product_id"]}, rec, upsert=True)
         print(f"product {rec['product_id']} upserted")
@@ -71,6 +71,7 @@ if __name__ == "__main__":
     ap.add_argument("--site-id", default="resiliencesoft")
     ap.add_argument("--product-id", default="general")
     ap.add_argument("--source-url", default="https://www.resiliencesoft.com")
+    ap.add_argument("--dir", default=str(DATA))
     ap.add_argument("--indexes", action="store_true")
     a = ap.parse_args()
-    ensure_indexes() if a.indexes else ingest(a.site_id, a.product_id, a.source_url)
+    ensure_indexes() if a.indexes else ingest(a.site_id, a.product_id, a.source_url, Path(a.dir))

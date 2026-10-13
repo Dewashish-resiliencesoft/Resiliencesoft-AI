@@ -1,0 +1,49 @@
+{
+ "site_id": "resiliohub",
+ "product_id": "resiliohub",
+ "name": "ResilioHub",
+ "scope": "public",
+ "description": "WhatsApp Business API CRM with AI chatbots, shared team inbox, broadcast campaigns and automation, powered by ResilienceSoft.",
+ "features": [
+  "WhatsApp Business API",
+  "AI chatbots and visual flow builder",
+  "Unified shared inbox (WhatsApp, Instagram, Telegram)",
+  "Broadcast campaigns with Meta templates",
+  "REST API and webhooks",
+  "Contact CRM, tags, notes and Kanban leads",
+  "Reports and insights"
+ ],
+ "pricing": {
+  "status": "published",
+  "currency": "INR",
+  "free_trial_days": 14,
+  "plans": [
+   {
+    "name": "Monthly",
+    "days": 30,
+    "price": 1499
+   },
+   {
+    "name": "Quarterly",
+    "days": 90,
+    "price": 3999
+   },
+   {
+    "name": "Half Yearly",
+    "days": 180,
+    "price": 6999
+   },
+   {
+    "name": "Yearly",
+    "days": 365,
+    "price": 9999
+   }
+  ],
+  "source": "https://resiliohub.com/#pricing"
+ },
+ "contact": {
+  "email": "support@resiliohub.com",
+  "phone": "+91 92019 96372"
+ },
+ "source_url": "https://resiliohub.com/"
+}

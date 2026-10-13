@@ -1,5 +1,5 @@
 """Retrieval eval: all keywords must appear in top-k retrieved text.
-Usage: python -m eval.run_eval [site_id]
+Usage: python -m eval.run_eval [site_id] [questions_file]
 """
 import json
 import sys
@@ -7,7 +7,8 @@ from pathlib import Path
 
 from app.rag_engine.retrieve import retrieve
 
-questions = json.loads((Path(__file__).parent / "eval_questions.json").read_text(encoding="utf-8"))
+qfile = sys.argv[2] if len(sys.argv) > 2 else "eval_questions.json"
+questions = json.loads((Path(__file__).parent / qfile).read_text(encoding="utf-8"))
 site_id = sys.argv[1] if len(sys.argv) > 1 else "resiliencesoft"
 passed = 0
 for q in questions:
