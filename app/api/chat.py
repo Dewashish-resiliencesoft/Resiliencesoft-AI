@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from app.config import get_settings
 from app.db import COMPANY_SITE, find_product
 from app.llm_gateway.manager import generate_answer
-from app.rag_engine.prompt import NO_ANSWER, system_prompt, user_prompt
+from app.rag_engine.prompt import NO_ANSWER, social_reply, system_prompt, user_prompt
 from app.rag_engine.retrieve import retrieve
 from app.security.guards import (
     check_rate_limit, contains_secret, looks_like_injection, resolve_site, scrub_untrusted,
@@ -16,6 +16,7 @@ from app.security.guards import (
 router = APIRouter()
 
 PRICE_RE = re.compile(r"\b(price|pricing|cost|plan|plans|fee|fees|charge|quote|package)s?\b", re.I)
+_NAMES = {"resiliohub": "ResilioHub", "sharpquiz": "Sharp Quiz", "resiliencesoft": "ResilienceSoft"}
 
 
 class PageContext(BaseModel):
@@ -67,6 +68,27 @@ def _published_price(rec: dict | None) -> tuple[str, str] | None:
     return f"{rec.get('name', 'Plans')}: {'; '.join(parts)}.{extra}", url
 
 
+def _product_name(site_id: str, product_slug: str | None) -> str:
+    return _NAMES.get(product_slug or site_id, product_slug or site_id)
+
+
+def _dialog(history: list[HistoryItem], limit: int) -> list[HistoryItem]:
+    # Drop the old landing-widget scope pair. Real turns are sent to the model.
+    kept = [
+        h for h in history
+        if not h.content.strip().startswith("You are ResilioBot")
+        and h.content.strip() != "Understood. I will follow that scope."
+    ]
+    return kept[-limit:]
+
+
+def _finish(answer: str | None, sources: list[dict], site_id: str, rid: str) -> dict:
+    if not answer or NO_ANSWER in answer or contains_secret(answer):
+        return {"answer": f"I don't have that information. Please {_contact_line(site_id)}.",
+                "sources": [], "request_id": rid}
+    return {"answer": answer, "sources": sources, "request_id": rid}
+
+
 @router.post("/chat")
 def chat(req: ChatRequest, request: Request):
     s = get_settings()
@@ -82,7 +104,11 @@ def chat(req: ChatRequest, request: Request):
                 "sources": [], "request_id": rid}
 
     product = req.page_context.product_slug or (None if site.site_id == COMPANY_SITE else site.site_id)
+    name = _product_name(site.site_id, product)
     sources: list[dict] = []
+    greeted = social_reply(message, name)
+    if greeted:
+        return {"answer": greeted, "sources": [], "request_id": rid}
 
     # exact-value questions: structured record only, never LLM guess
     if PRICE_RE.search(message):
@@ -96,10 +122,6 @@ def chat(req: ChatRequest, request: Request):
         return {"answer": answer, "sources": sources, "request_id": rid}
 
     hits = retrieve(message, site.site_id, site.scopes, product)
-    if not hits:
-        return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
-                "sources": [], "request_id": rid}
-
     safe_hits = []
     seen = set()
     for h in hits:
@@ -111,14 +133,10 @@ def chat(req: ChatRequest, request: Request):
             seen.add(h["source_url"])
             sources.append({"title": h.get("title", ""), "url": h["source_url"]})
     if not safe_hits:
-        return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
-                "sources": [], "request_id": rid}
-
-    answer = generate_answer(system_prompt(), user_prompt(message, safe_hits), rid)
+        sources = []
+    history = _dialog(req.history, s.max_history)
+    answer = generate_answer(system_prompt(name), user_prompt(message, safe_hits, history), rid)
     if answer is None:
         return {"answer": f"Sorry, I'm having trouble answering right now. Please {_contact_line(site.site_id)}.",
                 "sources": [], "request_id": rid}
-    if NO_ANSWER in answer or contains_secret(answer):
-        return {"answer": f"I don't have that information. Please {_contact_line(site.site_id)}.",
-                "sources": [], "request_id": rid}
-    return {"answer": answer, "sources": sources, "request_id": rid}
+    return _finish(answer, sources, site.site_id, rid)

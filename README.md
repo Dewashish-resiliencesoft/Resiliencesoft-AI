@@ -77,11 +77,11 @@ What that widget sends:
 - `site_key`: `resiliohub-public`
 - `message`: the visitor's question only, so search stays on the question
 - `page_context`: `{ url: location.href, product_slug: "resiliohub" }`
-- `history`: a fixed ResilioBot scope pair, then the last few turns
+- `history`: the last few real turns, so a follow-up still has the conversation
 
-That scope pair says: visitor is on the ResilioHub landing page, ResilioHub is a ResilienceSoft product, answer from ResilioHub, mention another product only if they name it, mention the company only if they ask. **This API does not pass `history` to the model**, so that pair does not change the answer today. Separation is already in the data: a `resiliohub-public` call never opens the Sharp Quiz collection or the company collection. Other products need `sharpquiz-public`. Company facts need `resiliencesoft-public`.
+The server persona is ResilioBot for that site. A `resiliohub-public` call never opens the Sharp Quiz collection or the company collection. Other products need `sharpquiz-public`. Company facts need `resiliencesoft-public`. Greetings get a direct reply. Facts still come from retrieved chunks, or the contact line when the chunks do not contain the answer.
 
-Browser Origins that work for ResilioHub right now: `https://resiliohub.com` and `https://www.resiliohub.com`. `https://staging.resiliohub.com` and `http://localhost:3000` get `403 Origin not allowed` until they are added to that site's `origins` list.
+Browser Origins allowed for ResilioHub: `https://resiliohub.com`, `https://www.resiliohub.com`, `https://staging.resiliohub.com`, and `http://localhost:3000`. Any other Origin gets `400` on the preflight (`Disallowed CORS origin`).
 
 ## What we are doing
 
@@ -93,15 +93,16 @@ flowchart TD
   Key -->|no| Deny["403"]
   Key -->|yes| Guard{injection or secret}
   Guard -->|yes| Contact["Contact line, no sources"]
-  Guard -->|no| Price{pricing words}
+  Guard -->|no| Social{greeting or thanks}
+  Social -->|yes| Done["short ResilioBot reply"]
+  Social -->|no| Price{pricing words}
   Price -->|yes| Record["Structured product record only"]
   Record -->|unpublished| Contact
   Record -->|published| Done["answer + sources"]
   Price -->|no| Search["Embed message · vector search · keyword re-rank"]
-  Search -->|no hits| Contact
-  Search -->|hits| Model["LLM sees chunks only, not history"]
+  Search --> Model["LLM: chunks + recent history"]
   Model -->|NO_ANSWER or all providers fail| Contact
-  Model -->|grounded text| Done
+  Model -->|reply| Done
 ```
 
 A chat call then:
@@ -110,11 +111,9 @@ A chat call then:
 2. Rate-limits by IP (`RATE_LIMIT_RPM`, default 30).
 3. Drops prompt-injection attempts and any chunk or answer that looks like a secret.
 4. Answers pricing questions from the structured product record only. If pricing is unpublished, it tells the visitor to contact the company. The model never guesses a price.
-5. For everything else, embeds the visitor message and searches that site's chunks (vector search plus a keyword re-rank). `page_context.product_slug` keeps hits on that product and on `general` chunks.
-6. Sends the retrieved text to the LLM with a fixed system prompt: answer only from `<context>`, otherwise `NO_ANSWER`.
-7. If retrieval is empty, every provider fails, or the model says `NO_ANSWER`, the visitor gets a contact line instead of a made-up answer.
-
-`history` is accepted and scanned for injection. It is not sent to the model. The answer is grounded in the current message plus retrieved chunks.
+5. Greetings, thanks, and "what can you do" get a short ResilioBot reply without a search.
+6. Other messages search that site's chunks. `page_context.product_slug` keeps hits on that product and on `general` chunks.
+7. The model sees those chunks plus the recent conversation. Facts must be in the chunks. If they are not, it says `NO_ANSWER` and the visitor gets the contact line.
 
 Sites in `SITES_JSON` today:
 
