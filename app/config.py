@@ -1,4 +1,5 @@
 import json
+import os
 from functools import lru_cache
 
 from pydantic import BaseModel
@@ -12,7 +13,12 @@ class SiteConfig(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env", "/etc/secrets/.env"), extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", "/etc/secrets/.env"),
+        # Render secret files: /etc/secrets/MONGODB_URI, /etc/secrets/GROQ_API_KEY, ...
+        secrets_dir="/etc/secrets" if os.path.isdir("/etc/secrets") else None,
+        extra="ignore",
+    )
 
     mongodb_uri: str = ""
     mongodb_db: str = "resiliencesoft_ai"
