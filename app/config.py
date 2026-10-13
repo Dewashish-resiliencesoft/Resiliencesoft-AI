@@ -12,7 +12,7 @@ class SiteConfig(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "/etc/secrets/.env"), extra="ignore")
 
     mongodb_uri: str = ""
     mongodb_db: str = "resiliencesoft_ai"

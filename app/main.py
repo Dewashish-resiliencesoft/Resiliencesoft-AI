@@ -1,3 +1,4 @@
+import logging
 import threading
 from contextlib import asynccontextmanager
 
@@ -11,6 +12,10 @@ from app.config import get_settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    s = get_settings()
+    logging.getLogger("uvicorn.error").info(
+        "config: mongodb_uri_set=%s groq_key_set=%s gemini_key_set=%s sites=%d",
+        bool(s.mongodb_uri), bool(s.groq_api_key), bool(s.gemini_api_key), len(s.sites))
     # warm the embedding model off the request path so the first chat isn't slow
     from app.rag_engine.embed import embed_query
     threading.Thread(target=embed_query, args=("warmup",), daemon=True).start()
