@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What is Sharp Quiz?",
+    "answer": "Sharp Quiz is a mobile quiz app for programming skills, general knowledge, current affairs, and exam practice. It is published by ResilienceSoft.",
+    "source_url": "https://sharpquiz.com/"
+  },
+  {
+    "question": "Where can I download Sharp Quiz?",
+    "answer": "Download Sharp Quiz on Google Play: https://play.google.com/store/apps/details?id=com.sharpquiz&hl=en-IN The website also has a QR code and a DOWNLOAD APP button.",
+    "source_url": "https://sharpquiz.com/"
+  },
+  {
+    "question": "Which programming languages does Sharp Quiz cover?",
+    "answer": "The website FAQ names PHP, React Native, .NET, and Angular. The Google Play listing also names React, C#, Python, Java, C, and C++.",
+    "source_url": "https://sharpquiz.com/"
+  },
+  {
+    "question": "Does Sharp Quiz have an AI quiz generator?",
+    "answer": "The Google Play listing describes an AI Topic Quiz Generator: enter a topic and the app generates questions. It also describes a Document to Quiz Generator that creates questions from an uploaded PDF.",
+    "source_url": "https://play.google.com/store/apps/details?id=com.sharpquiz&hl=en"
+  },
+  {
+    "question": "Which exams does Sharp Quiz mention?",
+    "answer": "The Google Play listing says current affairs and daily quizzes are designed for UPSC, SSC, Banking, Railway, and State Government Exams.",
+    "source_url": "https://play.google.com/store/apps/details?id=com.sharpquiz&hl=en"
+  },
+  {
+    "question": "How do I contact Sharp Quiz?",
+    "answer": "Privacy-policy questions on the website go to sharpquiz@gmail.com. Google Play lists support email sharpquizapp@gmail.com. The developer on Play is RESILIENCESOFT, info@resiliencesoft.com, +91 91099 11372. The website also has a Contact us form (first name, last name, 10-digit phone, email).",
+    "source_url": "https://sharpquiz.com/privacy-policy"
+  },
+  {
+    "question": "Does Sharp Quiz sell my personal information?",
+    "answer": "The website privacy policy says Sharp Quiz does not sell, rent, or trade personal information to third parties without consent. It may disclose information when required by law.",
+    "source_url": "https://sharpquiz.com/privacy-policy"
+  },
+  {
+    "question": "Who makes Sharp Quiz?",
+    "answer": "The website footer says Powered By ResilienceSoft (https://www.resiliencesoft.com/). Google Play lists the developer as RESILIENCESOFT, Bilaspur, Chhattisgarh.",
+    "source_url": "https://sharpquiz.com/"
+  }
+]

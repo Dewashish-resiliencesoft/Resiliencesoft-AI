@@ -11,31 +11,37 @@ import json
 from pathlib import Path
 
 from app.config import get_settings
-from app.db import get_db
+from app.db import COMPANY_SITE, get_db, knowledge_collection
 from app.rag_engine.embed import embed_documents
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 
 
-def ensure_indexes():
+def ensure_vector_index(coll):
+    """One Atlas vector index per collection. M0 allows 3 on the whole cluster."""
     from pymongo.operations import SearchIndexModel
     s = get_settings()
-    coll = get_db()["chunks"]
-    coll.create_index([("site_id", 1), ("chunk_key", 1)], unique=True)
+    coll.create_index([("chunk_key", 1)], unique=True)
+    names = {i.get("name") for i in coll.list_search_indexes()}
+    if s.vector_index in names:
+        print(f"{coll.full_name}: {s.vector_index} already exists")
+        return
     coll.create_search_index(SearchIndexModel(name=s.vector_index, type="vectorSearch", definition={
         "fields": [
             {"type": "vector", "path": "embedding", "numDimensions": s.embed_dim, "similarity": "cosine"},
             {"type": "filter", "path": "site_id"}, {"type": "filter", "path": "product_id"},
-            {"type": "filter", "path": "scope"}, {"type": "filter", "path": "language"}]}))
-    coll.create_search_index(SearchIndexModel(name=s.text_index, definition={
-        "mappings": {"dynamic": False, "fields": {
-            "text": {"type": "string"}, "title": {"type": "string"},
-            "site_id": {"type": "token"}, "scope": {"type": "token"}}}}))
-    print("indexes requested (Atlas builds them async)")
+            {"type": "filter", "path": "scope"}, {"type": "filter", "path": "language"},
+            {"type": "filter", "path": "doc_type"}]}))
+    print(f"{coll.full_name}: vector index requested")
+
+
+def ensure_indexes():
+    ensure_vector_index(get_db()["chunks"])
 
 
 def ingest(site_id: str, product_id: str, source_url: str, folder: Path = DATA):
-    db = get_db()
+    coll = knowledge_collection(site_id, create=True)
+    product_here = site_id != COMPANY_SITE
     chunks = [json.loads(l) for l in (folder / "chunks.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     docs = []
     for c in chunks:
@@ -46,23 +52,29 @@ def ingest(site_id: str, product_id: str, source_url: str, folder: Path = DATA):
             "language": "en", "title": m.get("section", ""), "text": c["text"],
             "source_url": m.get("source_url", source_url), "source": m.get("source", ""),
             "content_hash": hashlib.sha256(c["text"].encode()).hexdigest(),
+            **({"doc_type": "chunk"} if product_here else {}),
         })
-    coll = db["chunks"]
-    existing = {d["chunk_key"]: d["content_hash"] for d in coll.find({"site_id": site_id}, {"chunk_key": 1, "content_hash": 1})}
+    owned = {"doc_type": "chunk"} if product_here else {"site_id": site_id}
+    existing = {d["chunk_key"]: d["content_hash"] for d in coll.find(owned, {"chunk_key": 1, "content_hash": 1})}
     changed = [d for d in docs if existing.get(d["chunk_key"]) != d["content_hash"]]
     if changed:
         for d, v in zip(changed, embed_documents([d["text"] for d in changed])):
             d["embedding"] = v
             d["document_version"] = 1
-            coll.replace_one({"site_id": site_id, "chunk_key": d["chunk_key"]}, d, upsert=True)
+            coll.replace_one({**owned, "chunk_key": d["chunk_key"]}, d, upsert=True)
     stale = set(existing) - {d["chunk_key"] for d in docs}
     if stale:
-        coll.delete_many({"site_id": site_id, "chunk_key": {"$in": list(stale)}})
+        coll.delete_many({**owned, "chunk_key": {"$in": list(stale)}})
     print(f"upserted {len(changed)}, unchanged {len(docs) - len(changed)}, removed {len(stale)}")
 
+    store = coll if product_here else get_db()["products"]
     for p in (folder / "products").glob("*.json"):
         rec = json.loads(p.read_text(encoding="utf-8"))
-        db["products"].replace_one({"site_id": rec["site_id"], "product_id": rec["product_id"]}, rec, upsert=True)
+        key = {"site_id": rec["site_id"], "product_id": rec["product_id"]}
+        if product_here:
+            rec["doc_type"] = "product"
+            key = {"doc_type": "product", "product_id": rec["product_id"]}
+        store.replace_one(key, rec, upsert=True)
         print(f"product {rec['product_id']} upserted")
 
 

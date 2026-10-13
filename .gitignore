@@ -6,3 +6,7 @@ chroma_db/
 dist/
 build/
 .venv/
+
+# graphify local knowledge graph (never commit)
+graphify-out/
+graphify/

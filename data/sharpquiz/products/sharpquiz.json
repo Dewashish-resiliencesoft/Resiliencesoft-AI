@@ -1,0 +1,27 @@
+{
+  "site_id": "sharpquiz",
+  "product_id": "sharpquiz",
+  "name": "Sharp Quiz",
+  "scope": "public",
+  "description": "Mobile quiz app for programming, general knowledge, current affairs, and exam practice. Published by ResilienceSoft.",
+  "features": [
+    "Programming quizzes (PHP, React Native, .NET, Angular, and more)",
+    "General knowledge quizzes",
+    "AI topic quiz generator (Google Play listing)",
+    "PDF document to quiz (Google Play listing)",
+    "Current affairs and daily quiz for competitive exams",
+    "Google Play download"
+  ],
+  "pricing": {
+    "status": "requires_verification",
+    "source": "https://sharpquiz.com/"
+  },
+  "contact": {
+    "privacy_email": "sharpquiz@gmail.com",
+    "play_support_email": "sharpquizapp@gmail.com",
+    "developer_email": "info@resiliencesoft.com",
+    "phone": "+91 91099 11372"
+  },
+  "source_url": "https://sharpquiz.com/",
+  "store_url": "https://play.google.com/store/apps/details?id=com.sharpquiz&hl=en-IN"
+}
