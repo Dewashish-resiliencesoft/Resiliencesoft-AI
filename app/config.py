@@ -44,7 +44,11 @@ class Settings(BaseSettings):
     sites_json: str = "{}"
     rate_limit_rpm: int = 30
     max_message_chars: int = 1000
+    # ponytail: last 6 turns, 2400 chars total (~600 tokens). Groq gpt-oss-20b allows 131072,
+    # but this box is Render free (512 MB, 0.1 CPU) and fastembed already sits in that RAM.
+    # History is not stored here. Upgrade path: raise these after moving off the free plan.
     max_history: int = 6
+    max_history_chars: int = 2400
     contact_phone: str = "9109911372"
     contact_email: str = "info@resiliencesoft.com"
 

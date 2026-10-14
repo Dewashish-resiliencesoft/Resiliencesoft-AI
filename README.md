@@ -112,8 +112,8 @@ A chat call then:
 3. Drops prompt-injection attempts and any chunk or answer that looks like a secret.
 4. Answers pricing questions from the structured product record only. If pricing is unpublished, it tells the visitor to contact the company. The model never guesses a price.
 5. Greetings, thanks, and "what can you do" get a short ResilioBot reply without a search.
-6. Other messages search that site's chunks. `page_context.product_slug` keeps hits on that product and on `general` chunks.
-7. The model sees those chunks plus the recent conversation. Facts must be in the chunks. If they are not, it says `NO_ANSWER` and the visitor gets the contact line.
+6. Other messages search that site's chunks. `page_context.product_slug` keeps hits on that product and on `general` chunks. A demo or walkthrough ask also returns `media` (the public YouTube walkthrough) and may set `action` to `ask_live_demo` or `open_calendly`.
+7. The model sees those chunks plus the recent conversation. The server does not store the thread. Each browser sends its own `history`, capped at 6 turns and 2400 characters, so concurrent visitors cannot see each other. Groq allows a 131072-token window. This free Render instance is 512 MB and 0.1 CPU, and the embedding model already uses that RAM, so the cap stays small.
 
 Sites in `SITES_JSON` today:
 

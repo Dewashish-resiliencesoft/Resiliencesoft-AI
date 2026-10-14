@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from app.config import get_settings
 from app.db import COMPANY_SITE, find_product
 from app.llm_gateway.manager import generate_answer
+from app.rag_engine.actions import plan_action
 from app.rag_engine.prompt import NO_ANSWER, social_reply, system_prompt, user_prompt
 from app.rag_engine.retrieve import retrieve
 from app.security.guards import (
@@ -72,21 +73,44 @@ def _product_name(site_id: str, product_slug: str | None) -> str:
     return _NAMES.get(product_slug or site_id, product_slug or site_id)
 
 
-def _dialog(history: list[HistoryItem], limit: int) -> list[HistoryItem]:
-    # Drop the old landing-widget scope pair. Real turns are sent to the model.
+def _dialog(history: list[HistoryItem], limit: int, char_budget: int) -> list[HistoryItem]:
+    # Each request brings its own history. This process stores none, so two visitors cannot share a thread.
     kept = [
         h for h in history
         if not h.content.strip().startswith("You are ResilioBot")
         and h.content.strip() != "Understood. I will follow that scope."
     ]
-    return kept[-limit:]
+    chosen: list[HistoryItem] = []
+    used = 0
+    for item in reversed(kept[-limit:]):
+        room = char_budget - used
+        if room <= 0:
+            break
+        text = item.content.strip()[:room]
+        used += len(text)
+        chosen.append(HistoryItem(role=item.role, content=text))
+    chosen.reverse()
+    return chosen
 
 
-def _finish(answer: str | None, sources: list[dict], site_id: str, rid: str) -> dict:
+def _pack(answer: str, sources: list[dict], rid: str, media: list | None = None, action: str | None = None) -> dict:
+    return {
+        "answer": answer,
+        "sources": sources,
+        "media": media or [],
+        "action": action,
+        "request_id": rid,
+    }
+
+
+def _finish(answer: str | None, sources: list[dict], site_id: str, rid: str,
+            media: list | None = None) -> dict:
     if not answer or NO_ANSWER in answer or contains_secret(answer):
-        return {"answer": f"I don't have that information. Please {_contact_line(site_id)}.",
-                "sources": [], "request_id": rid}
-    return {"answer": answer, "sources": sources, "request_id": rid}
+        return _pack(
+            f"I don't have that information. Please {_contact_line(site_id)}.",
+            [], rid, media,
+        )
+    return _pack(answer, sources, rid, media)
 
 
 @router.post("/chat")
@@ -108,18 +132,24 @@ def chat(req: ChatRequest, request: Request):
     sources: list[dict] = []
     greeted = social_reply(message, name)
     if greeted:
-        return {"answer": greeted, "sources": [], "request_id": rid}
+        return _pack(greeted, [], rid)
+
+    planned = plan_action(message, req.history, site.site_id)
+    if planned["answer"]:
+        return _pack(planned["answer"], [], rid, planned["media"], planned["action"])
 
     # exact-value questions: structured record only, never LLM guess
     if PRICE_RE.search(message):
         rec = find_product(site.site_id, product, site.scopes)
         published = _published_price(rec)
         if published is None:
-            return {"answer": f"I don't have approved pricing information for that. Please {_contact_line(site.site_id)}.",
-                    "sources": [], "request_id": rid}
+            return _pack(
+                f"I don't have approved pricing information for that. Please {_contact_line(site.site_id)}.",
+                [], rid,
+            )
         answer, url = published
         sources = [{"title": rec.get("name") or "Pricing", "url": url}] if url else []
-        return {"answer": answer, "sources": sources, "request_id": rid}
+        return _pack(answer, sources, rid)
 
     hits = retrieve(message, site.site_id, site.scopes, product)
     safe_hits = []
@@ -134,9 +164,11 @@ def chat(req: ChatRequest, request: Request):
             sources.append({"title": h.get("title", ""), "url": h["source_url"]})
     if not safe_hits:
         sources = []
-    history = _dialog(req.history, s.max_history)
+    history = _dialog(req.history, s.max_history, s.max_history_chars)
     answer = generate_answer(system_prompt(name), user_prompt(message, safe_hits, history), rid)
     if answer is None:
-        return {"answer": f"Sorry, I'm having trouble answering right now. Please {_contact_line(site.site_id)}.",
-                "sources": [], "request_id": rid}
-    return _finish(answer, sources, site.site_id, rid)
+        return _pack(
+            f"Sorry, I'm having trouble answering right now. Please {_contact_line(site.site_id)}.",
+            [], rid,
+        )
+    return _finish(answer, sources, site.site_id, rid, planned["media"])
