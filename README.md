@@ -94,7 +94,7 @@ flowchart TD
   Key -->|yes| Guard{injection or secret}
   Guard -->|yes| Contact["Contact line, no sources"]
   Guard -->|no| Social{greeting or thanks}
-  Social -->|yes| Done["short ResilioBot reply"]
+  Social -->|yes| Done["short greeting"]
   Social -->|no| Price{pricing words}
   Price -->|yes| Record["Structured product record only"]
   Record -->|unpublished| Contact
@@ -203,7 +203,7 @@ uvicorn app.main:app --reload
 
 Response: `{ "answer", "sources": [{ "title", "url" }], "request_id" }`.
 
-The browser `Origin` must be on that site's allowlist. `message` max 1000 characters. Each history item max 2000 characters, role `user` or `assistant`. The ResilioHub landing widget is the client that sends this body. See [Where things live](#where-things-live).
+Send `Accept: text/event-stream` to receive the same answer as server-sent events: `delta` text chunks, then `done` with the full answer and sources. If the model has no fact, or a secret check fails after tokens already went out, a `replace` event swaps in the contact line. Clients that omit that header still get one JSON object. The browser `Origin` must be on that site's allowlist. `message` max 1000 characters. Each history item max 2000 characters, role `user` or `assistant`. The ResilioHub landing widget is the client that sends this body. See [Where things live](#where-things-live).
 
 - `GET /api/v1/ai/products/{slug}?site_key=...` — structured product record for that site
 - `GET /health`

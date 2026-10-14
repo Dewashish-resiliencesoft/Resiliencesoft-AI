@@ -43,3 +43,21 @@ def generate_answer(system: str, user: str, request_id: str = "") -> str | None:
                 if remaining <= 1:
                     break
     return None
+
+
+def generate_deltas(system: str, user: str, request_id: str = ""):
+    """Yield text chunks. Groq streams. A failed stream with no chunks falls back to one full reply."""
+    s = get_settings()
+    if _enabled("groq", s):
+        yielded = False
+        try:
+            for delta in providers.groq_deltas(s, system, user, s.provider_timeout):
+                yielded = True
+                yield delta
+        except providers.ProviderError as e:
+            log.warning("req=%s provider=groq stream failed: %s", request_id, e)
+        if yielded:
+            return
+    text = generate_answer(system, user, request_id)
+    if text:
+        yield text
