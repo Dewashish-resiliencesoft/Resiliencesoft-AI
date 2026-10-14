@@ -77,9 +77,9 @@ What that widget sends:
 - `site_key`: `resiliohub-public`
 - `message`: the visitor's question only, so search stays on the question
 - `page_context`: `{ url: location.href, product_slug: "resiliohub" }`
-- `history`: the last few real turns, so a follow-up still has the conversation
+- `history`: recent turns, plus any tone notes that landing page wants the model to see
 
-The server persona is ResilioBot for that site. A `resiliohub-public` call never opens the Sharp Quiz collection or the company collection. Other products need `sharpquiz-public`. Company facts need `resiliencesoft-public`. Greetings get a direct reply. Facts still come from retrieved chunks, or the contact line when the chunks do not contain the answer.
+Each `site_key` searches only that site's collection. A ResilioHub call does not open Sharp Quiz or the company collection. Videos, booking, and product voice belong to the landing page that calls this API, not to this service. Greetings get a short generic reply. Facts still come from retrieved chunks, or the contact line when the chunks do not contain the answer.
 
 Browser Origins allowed for ResilioHub: `https://resiliohub.com`, `https://www.resiliohub.com`, `https://staging.resiliohub.com`, and `http://localhost:3000`. Any other Origin gets `400` on the preflight (`Disallowed CORS origin`).
 
@@ -111,8 +111,8 @@ A chat call then:
 2. Rate-limits by IP (`RATE_LIMIT_RPM`, default 30).
 3. Drops prompt-injection attempts and any chunk or answer that looks like a secret.
 4. Answers pricing questions from the structured product record only. If pricing is unpublished, it tells the visitor to contact the company. The model never guesses a price.
-5. Greetings, thanks, and "what can you do" get a short ResilioBot reply without a search.
-6. Other messages search that site's chunks. `page_context.product_slug` keeps hits on that product and on `general` chunks. A demo or walkthrough ask also returns `media` (the public YouTube walkthrough) and may set `action` to `ask_live_demo` or `open_calendly`.
+5. Greetings, thanks, and "what can you do" get a short reply without a search. The wording is not tied to one product.
+6. Other messages search that site's chunks. `page_context.product_slug` keeps hits on that product and on `general` chunks.
 7. The model sees those chunks plus the recent conversation. The server does not store the thread. Each browser sends its own `history`, capped at 6 turns and 2400 characters, so concurrent visitors cannot see each other. Groq allows a 131072-token window. This free Render instance is 512 MB and 0.1 CPU, and the embedding model already uses that RAM, so the cap stays small.
 
 Sites in `SITES_JSON` today:
