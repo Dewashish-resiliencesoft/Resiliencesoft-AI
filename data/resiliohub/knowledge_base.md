@@ -231,3 +231,33 @@ Last updated: June 2025 · See also Privacy Policy and Terms & Conditions .
 Privacy Policy
 Terms & Conditions
 
+
+## Privacy Policy
+> Source: https://resiliohub.com/privacy-policy/
+
+### Overview
+ResilioHub respects your privacy and is committed to protecting it. The Privacy Policy explains how ResilioHub collects, uses, stores and protects your information when you use the mobile application and related services. Last updated: December 2025. ResilioHub collects only the information necessary to provide the service.
+### Information we collect
+- Account information: name, email address, mobile number, and login credentials (encrypted).
+- Messaging and usage data, if you connect your WhatsApp account through official APIs or permitted integrations: message metadata (timestamps, delivery status), and media files you choose to send, receive or store. Message content is processed transiently only as required to display conversations to the user and is not stored or analyzed for any other purpose.
+- Device information: device type and operating system, app version, crash logs and performance diagnostics.
+- Notifications: if you enable push notifications, a notification token is stored to deliver alerts. Notifications are optional and can be disabled at any time.
+ResilioHub does not read, sell, or share message content for advertising purposes.
+### How we use information
+Information is used to provide and operate the ResilioHub app, authenticate users, display and manage chat inboxes, send optional notifications, improve app performance and reliability, and provide customer support. ResilioHub does not use your data for advertising or marketing without consent.
+### WhatsApp and third-party services
+ResilioHub integrates with the official WhatsApp Cloud API (by Meta) and other optional third-party services configured by the user. Data shared with third-party services is limited to what is required for the selected integration and is governed by their respective privacy policies.
+### Payments and subscriptions
+The ResilioHub mobile app does not process payments, subscriptions or in-app purchases. Account access and feature availability are provisioned externally by businesses or administrators and are not purchased inside the app.
+### Data sharing
+ResilioHub does not sell or rent personal data. Information may be shared only when required by law, to comply with legal obligations, or to protect rights, safety or security.
+### Data storage and security
+Data is stored securely using industry-standard safeguards. Access is restricted to authorized systems only, and encryption is used where applicable. Despite best efforts, no system is 100% secure.
+### Your rights
+You have the right to access your personal data, request correction or deletion of your data, disable notifications at any time, and request account deletion. To request account deletion or data removal, contact ResilioHub using the details in the policy. ResilioHub does not store WhatsApp messages on Meta's behalf and acts only as a data processor for user-initiated communications.
+### Children's privacy
+ResilioHub is not intended for users under the age of 13 and does not knowingly collect data from children.
+### Changes to this policy
+ResilioHub may update the Privacy Policy from time to time. Any changes are posted on the Privacy Policy page with an updated date.
+### Privacy contact
+For questions about the Privacy Policy or your data, email support@resiliencesoft.com or visit https://resiliohub.com/. The full policy is at https://resiliohub.com/privacy-policy/.

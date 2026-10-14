@@ -58,5 +58,65 @@
   "question": "Who makes ResilioHub?",
   "answer": "ResilioHub is built and powered by ResilienceSoft, a Meta Tech Partner for the WhatsApp Business API.",
   "source_url": "https://resiliohub.com/about/"
+ },
+ {
+  "question": "Does ResilioHub have video tutorials?",
+  "answer": "Yes. The Tutorials page has short videos and plain instructions for every core ResilioHub feature, such as inbox, campaigns, templates and contacts. You can filter them by topic, language and platform (web or mobile).",
+  "source_url": "https://resiliohub.com/tutorials/"
+ },
+ {
+  "question": "Can I book a live demo of ResilioHub?",
+  "answer": "Yes. Use the Book a live demo button on the website, or book a call from the Contact page, and a ResilioHub expert will walk you through the product.",
+  "source_url": "https://resiliohub.com/contact/"
+ },
+ {
+  "question": "Which tools and integrations does ResilioHub connect with?",
+  "answer": "ResilioHub connects WhatsApp Business API, WhatsApp QR, Instagram, Telegram, a REST API, webhooks, a QR REST API, WA forms, Meta templates and chatbots.",
+  "source_url": "https://resiliohub.com/features/"
+ },
+ {
+  "question": "What standout features does ResilioHub have?",
+  "answer": "Standout features include chatbot automation, REST API access, contact tagging, conversation notes, a WhatsApp warmer, a QR REST API, an Instagram inbox, a Telegram inbox and WA forms.",
+  "source_url": "https://resiliohub.com/features/"
+ },
+ {
+  "question": "How long does it take to set up ResilioHub?",
+  "answer": "ResilioHub says you can set up in less than 5 minutes.",
+  "source_url": "https://resiliohub.com/"
+ },
+ {
+  "question": "Is the ResilioHub FAQ available in Hindi?",
+  "answer": "Yes. The FAQ page is available in English and Hindi.",
+  "source_url": "https://resiliohub.com/faq/"
+ },
+ {
+  "question": "Who can I talk to about sales, technical support or onboarding?",
+  "answer": "The Contact page covers sales, technical support and onboarding. Fill out the form or book a call, or reach ResilioHub on +91 92019 96372 or support@resiliohub.com.",
+  "source_url": "https://resiliohub.com/contact/"
+ },
+ {
+  "question": "What is ResilioHub's privacy policy?",
+  "answer": "ResilioHub collects only what it needs to run the service: account details (name, email, mobile number, encrypted login), message metadata, device information and an optional notification token. It does not sell or rent personal data, and does not use your data for advertising without consent. The full policy is at resiliohub.com/privacy-policy.",
+  "source_url": "https://resiliohub.com/privacy-policy/"
+ },
+ {
+  "question": "Does ResilioHub sell my data or read my messages?",
+  "answer": "No. ResilioHub does not sell or rent personal data, and does not read, sell or share message content for advertising. Message content is processed transiently only to show your conversations and is not stored or analyzed for any other purpose.",
+  "source_url": "https://resiliohub.com/privacy-policy/"
+ },
+ {
+  "question": "How does ResilioHub keep my data secure?",
+  "answer": "Data is stored with industry-standard safeguards, access is limited to authorized systems, and encryption is used where applicable. No system is 100% secure.",
+  "source_url": "https://resiliohub.com/privacy-policy/"
+ },
+ {
+  "question": "Can I ask ResilioHub to delete or correct my data?",
+  "answer": "Yes. You can request access, correction or deletion of your data, and you can ask for account deletion. Email support@resiliencesoft.com, or follow the steps on the Delete Account page.",
+  "source_url": "https://resiliohub.com/privacy-policy/"
+ },
+ {
+  "question": "Is ResilioHub meant for children?",
+  "answer": "No. ResilioHub is not intended for users under 13 and does not knowingly collect data from children.",
+  "source_url": "https://resiliohub.com/privacy-policy/"
  }
 ]
