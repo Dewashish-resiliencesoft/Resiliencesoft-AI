@@ -50,7 +50,6 @@ Connect your favourite platforms in minutes — no engineering required.
 WhatsApp Business API
 WhatsApp QR
 Instagram
-Telegram
 REST API
 Webhooks
 QR REST API
@@ -63,14 +62,14 @@ From connecting WhatsApp to deploying chatbots — ResilioHub gives your team ev
 Build powerful WhatsApp chatbots and automation flows with a simple drag & drop builder. Trigger actions, route conversations, and respond instantly — 24/7.
 Used by 50,000+ businesses to automate conversations
 ### Every conversation, one place
-Assign agents, add labels, write notes, and reply from a single unified inbox. Works with WhatsApp API, QR, Instagram, and Telegram.
+Assign agents, add labels, write notes, and reply from a single unified inbox. Works with WhatsApp API, QR, and Instagram.
 Hi! Is the yearly plan still on offer?
 Yes! The Yearly plan is ₹9,999 — chatbots, broadcasting, and the unified inbox included. 🚀
 Perfect, signing up now. Thanks!
 ### Campaigns & broadcasting
 Create Meta-approved templates, send bulk campaigns to your phonebook, and track every message from a live campaign dashboard.
 ### Works with tools you already use
-Connect WhatsApp Business API, Instagram, Telegram, REST API, webhooks, and Meta templates — all from one platform.
+Connect WhatsApp Business API, Instagram, REST API, webhooks, and Meta templates — all from one platform.
 ### Go live in 3 simple steps
 No engineering team required. Just connect, configure, and go live.
 ### Connect a WhatsApp number
@@ -115,9 +114,9 @@ Design complex conversation flows using our intuitive drag-and-drop canvas. Trig
 - Webhook & API action integration
 ### Unified Team Inbox for All Channels
 Collaborate with your team and respond to every message in real time.
-Connect WhatsApp Business API, WhatsApp QR, Instagram Direct, and Telegram into one single shared dashboard. Assign conversations to specific agents, set custom tags, leave internal notes, and track customer history seamlessly.
+Connect WhatsApp Business API, WhatsApp QR, and Instagram Direct into one single shared dashboard. Assign conversations to specific agents, set custom tags, leave internal notes, and track customer history seamlessly.
 - Shared multi-agent inbox
-- WhatsApp, Instagram & Telegram support
+- WhatsApp and Instagram support
 - Internal team chat notes & user tagging
 - Automated lead routing & assignment
 - Canned responses & quick replies
@@ -169,7 +168,7 @@ ResilioHub pricing is by subscription duration. Every plan includes every featur
 | Half Yearly | 180 days | ₹6,999 |
 | Yearly (Most Popular) | 365 days | ₹9,999 |
 
-Standout features included in every plan: chatbot automation, REST API access, contact tagging, conversation notes, WhatsApp warmer, QR REST API, Instagram inbox, Telegram inbox, and WA forms.
+Standout features included in every plan: chatbot automation, REST API access, contact tagging, conversation notes, WhatsApp warmer, QR REST API, Instagram inbox, and WA forms.
 
 Free trial: a 14-day free trial is available, no credit card required. Sign up at https://resiliohub.com/signup/.
 
@@ -211,7 +210,7 @@ Once confirmed, your account is deactivated immediately and permanently removed 
 ### Data we delete
 - Account profile (name, email, phone, login credentials)
 - Subscription history and billing records tied to your account
-- Connected WhatsApp, Instagram, and Telegram inboxes
+- Connected WhatsApp and Instagram inboxes
 - Contacts, labels, notes, and conversation history
 - Campaigns, templates, chatbots, and automation flows
 - Team members and agent assignments under your workspace

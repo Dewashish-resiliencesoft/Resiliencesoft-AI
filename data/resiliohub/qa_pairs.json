@@ -10,8 +10,8 @@
   "source_url": "https://resiliohub.com/#faq"
  },
  {
-  "question": "Can I manage Instagram and Telegram too?",
-  "answer": "Yes. The unified inbox brings Instagram and Telegram conversations alongside WhatsApp, so your team replies from a single place.",
+  "question": "Can I manage Instagram too?",
+  "answer": "Yes. The unified inbox brings Instagram conversations alongside WhatsApp, so your team replies from a single place.",
   "source_url": "https://resiliohub.com/#faq"
  },
  {
@@ -51,7 +51,7 @@
  },
  {
   "question": "What channels does ResilioHub support?",
-  "answer": "ResilioHub's unified inbox supports WhatsApp Business API, WhatsApp QR, Instagram Direct and Telegram, plus REST API, webhooks and Meta templates.",
+  "answer": "ResilioHub's unified inbox supports WhatsApp Business API, WhatsApp QR and Instagram Direct, plus REST API, webhooks and Meta templates.",
   "source_url": "https://resiliohub.com/features/"
  },
  {
@@ -71,12 +71,12 @@
  },
  {
   "question": "Which tools and integrations does ResilioHub connect with?",
-  "answer": "ResilioHub connects WhatsApp Business API, WhatsApp QR, Instagram, Telegram, a REST API, webhooks, a QR REST API, WA forms, Meta templates and chatbots.",
+  "answer": "ResilioHub connects WhatsApp Business API, WhatsApp QR, Instagram, a REST API, webhooks, a QR REST API, WA forms, Meta templates and chatbots.",
   "source_url": "https://resiliohub.com/features/"
  },
  {
   "question": "What standout features does ResilioHub have?",
-  "answer": "Standout features include chatbot automation, REST API access, contact tagging, conversation notes, a WhatsApp warmer, a QR REST API, an Instagram inbox, a Telegram inbox and WA forms.",
+  "answer": "Standout features include chatbot automation, REST API access, contact tagging, conversation notes, a WhatsApp warmer, a QR REST API, an Instagram inbox and WA forms.",
   "source_url": "https://resiliohub.com/features/"
  },
  {
@@ -118,5 +118,10 @@
   "question": "Is ResilioHub meant for children?",
   "answer": "No. ResilioHub is not intended for users under 13 and does not knowingly collect data from children.",
   "source_url": "https://resiliohub.com/privacy-policy/"
+ },
+ {
+  "question": "Does ResilioHub support Telegram?",
+  "answer": "No. ResilioHub does not support Telegram. Its channels are WhatsApp Business API, WhatsApp QR and Instagram Direct. For other channels, contact support@resiliohub.com.",
+  "source_url": "https://resiliohub.com/features/"
  }
 ]
